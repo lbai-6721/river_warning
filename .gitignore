@@ -241,3 +241,13 @@ Thumbs.db
 # 其他
 .ipynb_checkpoints/
 model_data/  # 如果不想提交模型数据
+
+# Reproducible experiment workspace (data remains local)
+runs/
+artifacts/
+paper_output/
+*.joblib
+*.pkl
+configs/local.*
+*.zip
+*.rar
