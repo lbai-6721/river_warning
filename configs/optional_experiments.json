@@ -1,0 +1,27 @@
+{
+  "experiments": [
+    {
+      "name": "seg_augmentation",
+      "command": "train-seg",
+      "base_config": "configs/segmentation.json",
+      "grid": {
+        "augmentation.weather_p": [0, 0.3],
+        "augmentation.equipment_p": [0, 0.1],
+        "seed": [42, 2026, 3407]
+      }
+    },
+    {
+      "name": "seg_loss",
+      "command": "train-seg",
+      "base_config": "configs/segmentation.json",
+      "grid": {
+        "loss": [
+          {"dice_weight": 0, "focal_gamma": 0, "boundary_weight": 0},
+          {"dice_weight": 1, "focal_gamma": 0, "boundary_weight": 0},
+          {"dice_weight": 1, "focal_gamma": 0, "boundary_weight": 0.5}
+        ],
+        "seed": [42, 2026, 3407]
+      }
+    }
+  ]
+}

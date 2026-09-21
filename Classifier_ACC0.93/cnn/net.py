@@ -48,6 +48,6 @@ class CNN(nn.Module):
         return out
 
 
-model = CNN()
-# print(model)
+if __name__ == "__main__":
+    print(CNN())
 

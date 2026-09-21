@@ -1,0 +1,15 @@
+{
+  "features": "artifacts/features/manifest.csv",
+  "model": "logistic",
+  "feature_set": "both",
+  "quality_gate": false,
+  "seed": 42,
+  "epochs": 100,
+  "patience": 20,
+  "hidden": 32,
+  "batch_size": 32,
+  "lr": 0.001,
+  "threads": 2,
+  "bootstrap": 1000,
+  "allow_unverified_labels": false
+}

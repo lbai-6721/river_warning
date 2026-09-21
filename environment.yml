@@ -1,0 +1,11 @@
+name: river-research
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - -r requirements.txt
+# Install matched torch and torchvision CPU/CUDA wheels using the official
+# PyTorch instructions for the selected remote host. Do not copy this machine's
+# CPU wheel lock into a GPU environment.

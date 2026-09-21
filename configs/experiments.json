@@ -1,0 +1,37 @@
+{
+  "experiments": [
+    {
+      "name": "seg_main",
+      "command": "train-seg",
+      "base_config": "configs/segmentation.json",
+      "grid": {
+        "model.name": ["deeplab_mobilenet", "unet", "lraspp_mobilenet"],
+        "seed": [42, 2026, 3407]
+      }
+    },
+    {
+      "name": "cls_main",
+      "command": "train-cls",
+      "base_config": "configs/classification.json",
+      "grid": {
+        "model": ["logistic", "forest", "dual_cnn"],
+        "seed": [42, 2026, 3407]
+      }
+    },
+    {
+      "name": "cls_ablation",
+      "command": "train-cls",
+      "base_config": "configs/classification.json",
+      "grid": {
+        "feature_set": ["area", "boundary", "both"],
+        "seed": [42, 2026, 3407]
+      }
+    },
+    {
+      "name": "area_rule",
+      "command": "train-cls",
+      "base_config": "configs/classification.json",
+      "grid": {"model": ["area_threshold"], "feature_set": ["area"]}
+    }
+  ]
+}

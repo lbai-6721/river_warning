@@ -396,7 +396,7 @@ if __name__ == "__main__":
         if not os.path.exists(os.path.join(output_folder, name)):
             os.makedirs(os.path.join(output_folder, name))
         predicted_folder = os.path.join(predicted_folder_, predicted_folder)
-        for file in os.listdir(predicted_folder):
+        for file in sorted(os.listdir(predicted_folder)):
             # 跳过目录和隐藏文件
             file_path = os.path.join(predicted_folder, file)
             if os.path.isdir(file_path) or file.startswith('.'):

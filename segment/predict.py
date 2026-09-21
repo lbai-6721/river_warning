@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
         def cal_each_area(mask):
             vetor = []
-            for i in range(19):
+            for i in range(20):
                 T_area, T_per = Area_detection(mask, (0, 0+i*128), (1440, 128*(i+1)))
                 vetor.append(T_per)
             print(vetor)

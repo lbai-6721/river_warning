@@ -1,0 +1,20 @@
+{
+  "manifest": "artifacts/day_roi/manifest.csv",
+  "model": {"name": "deeplab_mobilenet", "output_stride": 16},
+  "input_size": 512,
+  "train_crop": true,
+  "tile_size": 512,
+  "tile_stride": 384,
+  "seed": 42,
+  "epochs": 100,
+  "patience": 20,
+  "batch_size": 4,
+  "workers": 0,
+  "threads": 2,
+  "lr": 0.0003,
+  "weight_decay": 0.0001,
+  "augmentation": {"flip": false, "weather_p": 0, "equipment_p": 0},
+  "loss": {"dice_weight": 0, "focal_gamma": 0, "boundary_weight": 0},
+  "boundary_tolerance": 2,
+  "bootstrap": 1000
+}

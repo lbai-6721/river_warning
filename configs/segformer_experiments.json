@@ -1,0 +1,10 @@
+{
+  "experiments": [
+    {
+      "name": "segformer_optional",
+      "command": "train-seg",
+      "base_config": "configs/segmentation.json",
+      "grid": {"model.name": ["segformer_b0"], "seed": [42, 2026, 3407]}
+    }
+  ]
+}

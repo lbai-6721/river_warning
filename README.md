@@ -18,4 +18,21 @@
 
 先使用新流程检查数据和修复评价协议，再运行正式训练。不要直接把旧脚本输出当成独立测试结果。
 
-Git 版本与迁移说明见 `docs/REPOSITORY.md`。
+## 运行入口
+
+```powershell
+Set-Location 'D:\scientific_research\river-project\codes\river_warning'
+$riverPython = 'D:\anaconda\envs\river-segment\python.exe'
+& $riverPython -m riverlab doctor
+& $riverPython -m unittest discover -s tests -v
+& $riverPython -m riverlab --help
+```
+
+- [实验实现、GPU 运行顺序与命令](docs/EXPERIMENTS.md)
+- [数据清单、事件标注与结果格式](docs/DATA_SCHEMA.md)
+- [本次 CPU 验证与数据检查](docs/CPU_VERIFICATION.md)
+- [Git 版本与迁移说明](docs/REPOSITORY.md)
+
+**当前数据待办：** 旧三张分类 CSV 的243个图像对中228个标识核对不通过，不能直接拼接后训练。使用 `audit-legacy-features` 查看错配行，核对标签来源后从原图重算特征。原始数据保持原样。
+
+正式模型训练与论文性能结果尚未完成；当前交付为通过 CPU 验证的实验工程。
