@@ -98,7 +98,8 @@ class IntegrationTests(unittest.TestCase):
             cls.evaluate(self.root/"logistic"/"model.joblib", features, self.root/"mismatch")
 
     def test_all_available_segmentation_models_forward_offline(self):
-        for name in ["unet", "deeplab_mobilenet", "deeplab_xception", "segnet", "lraspp_mobilenet"]:
+        for name in ["unet", "deeplab_mobilenet", "deeplab_xception", "segnet",
+                     "fcn_resnet50", "deeplabv3_resnet50", "lraspp_mobilenet"]:
             with self.subTest(name=name):
                 model = segmentation_model({"name": name, "width": 2}).eval()
                 with torch.inference_mode():

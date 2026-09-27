@@ -137,8 +137,14 @@ def device_for(name):
 
 def load_weights(path):
     import torch
-    # Only tensors and primitive metadata are used by riverlab checkpoints.
-    return torch.load(resolve(path), map_location="cpu", weights_only=True)
+    # Prefer restricted loading when supported. Older torch versions do not
+    # expose weights_only, so trusted experiment checkpoints use the legacy API.
+    try:
+        return torch.load(resolve(path), map_location="cpu", weights_only=True)
+    except TypeError as exc:
+        if "weights_only" not in str(exc):
+            raise
+        return torch.load(resolve(path), map_location="cpu")
 
 
 def completed(path):

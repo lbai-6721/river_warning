@@ -48,6 +48,50 @@ class TorchvisionAdapter(nn.Module):
         return self.model(x)["out"]
 
 
+def _binary_conv_like(layer):
+    return nn.Conv2d(
+        layer.in_channels, 2, layer.kernel_size, layer.stride, layer.padding,
+        layer.dilation, layer.groups, bias=layer.bias is not None)
+
+
+def torchvision_segmentation_model(name, pretrained=False):
+    """Build official torchvision baselines across legacy and weights APIs."""
+    from torchvision.models import segmentation as tv_seg
+    constructors = {
+        "fcn_resnet50": (tv_seg.fcn_resnet50, "FCN_ResNet50_Weights"),
+        "deeplabv3_resnet50": (
+            tv_seg.deeplabv3_resnet50, "DeepLabV3_ResNet50_Weights"),
+        "lraspp_mobilenet": (
+            tv_seg.lraspp_mobilenet_v3_large,
+            "LRASPP_MobileNet_V3_Large_Weights"),
+    }
+    constructor, enum_name = constructors[name]
+    try:
+        weights_enum = getattr(tv_seg, enum_name)
+        if pretrained:
+            model = constructor(weights=weights_enum.DEFAULT)
+        else:
+            model = constructor(
+                weights=None, weights_backbone=None, num_classes=2)
+    except (AttributeError, TypeError):
+        if pretrained:
+            model = constructor(pretrained=True)
+        else:
+            model = constructor(
+                pretrained=False, pretrained_backbone=False, num_classes=2)
+
+    if pretrained:
+        if name == "lraspp_mobilenet":
+            model.classifier.low_classifier = _binary_conv_like(
+                model.classifier.low_classifier)
+            model.classifier.high_classifier = _binary_conv_like(
+                model.classifier.high_classifier)
+        else:
+            model.classifier[-1] = _binary_conv_like(model.classifier[-1])
+            model.aux_classifier = None
+    return TorchvisionAdapter(model)
+
+
 def segmentation_model(config):
     name = config["name"]
     if name == "unet":
@@ -62,10 +106,9 @@ def segmentation_model(config):
         from nets.deeplabv3_plus import DeepLab
         return DeepLab(num_classes=2, backbone=name.split("_")[1], pretrained=False,
                        downsample_factor=config.get("output_stride", 16))
-    if name == "lraspp_mobilenet":
-        from torchvision.models.segmentation import lraspp_mobilenet_v3_large
-        return TorchvisionAdapter(lraspp_mobilenet_v3_large(
-            weights=None, weights_backbone=None, num_classes=2))
+    if name in {"fcn_resnet50", "deeplabv3_resnet50", "lraspp_mobilenet"}:
+        return torchvision_segmentation_model(
+            name, bool(config.get("pretrained", False)))
     if name == "segformer_b0":
         try:
             from transformers import SegformerConfig, SegformerForSemanticSegmentation

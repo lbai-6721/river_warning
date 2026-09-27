@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "name": "night_seg_scratch",
+      "command": "train-seg",
+      "base_config": "configs/segmentation.json",
+      "grid": {
+        "model.name": ["deeplab_mobilenet", "unet", "lraspp_mobilenet"],
+        "model.pretrained": [false],
+        "seed": [42]
+      }
+    }
+  ]
+}
