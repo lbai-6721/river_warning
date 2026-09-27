@@ -194,7 +194,7 @@ python -m riverlab plan --config configs/optional_experiments.json --output arti
 python -m riverlab aggregate --runs runs/model_a_test runs/model_b_test --output paper_output/results.csv
 ```
 
-每次运行保留 `run.json`（配置、Git版本、环境、输入清单哈希）、权重、验证记录、逐样本预测和指标。`aggregate` 输出真实标量结果，不虚构尚未训练的结果。种子均值/标准差应按同一配置的多次运行汇总，不能把不同模型或不同测试集合在一起。分组 bootstrap 区间与跨种子标准差是两种不确定性，不能互相替代。
+每次运行保留 `run.json`（配置、Git版本、环境、输入的清单哈希）、权重、验证记录、逐样本预测和指标。`aggregate` 输出真实标量结果，不虚构尚未训练的结果。种子均值/标准差应按同一配置的多次运行汇总，不能把不同模型或不同测试集合在一起。分组 bootstrap 区间与跨种子标准差是两种不确定性，不能互相替代。
 
 目前环境文件仅提供依赖起点，GPU 主机需要按实际 CUDA/驱动安装匹配 PyTorch，再运行 `doctor` 和 CPU 测试；未选择远程主机前，本轮不连接、不上传。数据、权重和运行产物不进 Git，迁移数据时保持相对目录或修改配置，并保存校验清单。joblib 分类权重仅加载可信来源。
 
