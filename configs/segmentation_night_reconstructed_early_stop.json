@@ -1,0 +1,15 @@
+{
+  "experiments": [
+    {
+      "name": "night_reconstructed_scratch_early_stop",
+      "command": "train-seg",
+      "base_config": "configs/segmentation_night_reconstructed.json",
+      "grid": {
+        "model.name": ["deeplab_mobilenet", "unet", "lraspp_mobilenet"],
+        "model.pretrained": [false],
+        "seed": [42],
+        "patience": [20]
+      }
+    }
+  ]
+}

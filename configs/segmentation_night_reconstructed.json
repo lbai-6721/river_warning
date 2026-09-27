@@ -7,7 +7,7 @@
   "tile_stride": 384,
   "seed": 42,
   "epochs": 100,
-  "patience": 0,
+  "patience": 20,
   "batch_size": 4,
   "workers": 0,
   "threads": 2,

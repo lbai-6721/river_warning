@@ -4,7 +4,7 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 python_bin="${RIVER_PYTHON:-python}"
-day_session="${DAY_TMUX_SESSION:-river-day-full}"
+day_session="${DAY_TMUX_SESSION:-river-day-full-es}"
 
 while tmux has-session -t "$day_session" 2>/dev/null; do
   echo "waiting for daytime queue: $day_session"
@@ -14,7 +14,7 @@ done
 "$python_bin" - <<'PY'
 import json
 from pathlib import Path
-names = ["day_full_scratch_no_early_stop_{:03d}".format(i) for i in range(3)]
+names = ["day_full_scratch_early_stop_{:03d}".format(i) for i in range(3)]
 for name in names:
     path = Path("runs") / name / "run.json"
     if not path.exists() or json.loads(path.read_text(encoding="utf-8"))["status"] != "complete":
@@ -43,11 +43,11 @@ fi
 "$python_bin" -m riverlab check-manifest \
   --manifest "$reconstructed/manifest.csv" --mask-samples 100
 
-plan="artifacts/night_reconstructed_no_early_stop_plan"
+plan="artifacts/night_reconstructed_early_stop_plan"
 if [[ ! -d "$plan" ]]; then
   "$python_bin" -m riverlab plan \
-    --config configs/segmentation_night_reconstructed_no_early_stop.json \
+    --config configs/segmentation_night_reconstructed_early_stop.json \
     --output "$plan"
 fi
 "$python_bin" scripts/run_segmentation_comparison.py "$plan" \
-  --logs artifacts/night_reconstructed_no_early_stop_logs
+  --logs artifacts/night_reconstructed_early_stop_logs
