@@ -45,8 +45,8 @@ $riverPython = 'D:\anaconda\envs\river-segment\python.exe'
 ```powershell
 & $riverPython -m riverlab audit-legacy --output artifacts/legacy_split_audit.json
 & $riverPython -m riverlab audit-legacy-features --output artifacts/legacy_feature_audit.json
-& $riverPython -m riverlab inventory --config configs/night_dataset.json --output artifacts/night_manifest.csv
-& $riverPython -m riverlab inventory --config configs/day_dataset.json --output artifacts/day_manifest.csv
+& $riverPython -m riverlab inventory --config configs/night_dataset.json --output datasets/segmentation/night/full_size_manifest.csv
+& $riverPython -m riverlab inventory --config configs/day_dataset.json --output datasets/segmentation/day/source_manifest.csv
 ```
 
 旧 CSV 共243对。早期审计把旧标识中的连字符和紧凑日期格式也判错，原先报告的228对不是228对数值错误。修正解析后，134对起止小时一致，103对仅起始小时不同，另4对标识不完整、2对双端小时不一致。核对原始图像文件夹发现103对正例的同名文件夹包含边界表所列两张图，因此多数是目录/标识命名问题；面积特征数值和标签依据仍需追溯。2021年有103正/15负，2022年只有125负，跨年份分类会受标签分布影响。逐行复核见 `paper_output/data_cleaned/legacy_pair_reconciliation.csv`；`import-legacy` 发现未复核问题仍拒绝导入，原 CSV 不改写。
@@ -54,8 +54,8 @@ $riverPython = 'D:\anaconda\envs\river-segment\python.exe'
 夜间清单已核对 722 张图及同名 mask。本次按日期先后生成的独立分割试运行划分为训练 457、验证 124、测试 141 张，对应 36/12/12 个日期组。这是**未加入事件清单的开发候选划分**，正式事件标注完成后应在首次正式训练之前重新冻结全项目划分。
 
 ```powershell
-& $riverPython -m riverlab split --manifest artifacts/night_manifest.csv --output artifacts/night_split_v2 --folds 5
-& $riverPython -m riverlab check-manifest --manifest artifacts/night_split_v2/manifest.csv
+& $riverPython -m riverlab split --manifest datasets/segmentation/night/full_size_manifest.csv --output datasets/segmentation/night/full_size_split_v2 --folds 5
+& $riverPython -m riverlab check-manifest --manifest datasets/segmentation/night/full_size_split_v2/manifest.csv
 ```
 
 `split` 默认按时间顺序，60%/20%/20% 针对独立组，不保证图像数恰为该比例。它会合并同原图裁剪、共享帧、同日期（跨摄像头）、同已确认事件与相同图像哈希。`--hash-images` 可计算精确文件哈希；它不能识别重新压缩、改尺寸后的近重复图像，仍需人工核查。
@@ -79,7 +79,7 @@ $riverPython = 'D:\anaconda\envs\river-segment\python.exe'
 合并需要使用的日夜分割清单，再将所有图像对、分割图和事件共同分组：
 
 ```powershell
-& $riverPython -m riverlab merge-manifests --inputs artifacts/day_manifest.csv artifacts/night_manifest.csv --output artifacts/all_frames.csv
+& $riverPython -m riverlab merge-manifests --inputs datasets/segmentation/day/source_manifest.csv datasets/segmentation/night/full_size_manifest.csv --output artifacts/all_frames.csv
 & $riverPython -m riverlab joint-split --frames artifacts/all_frames.csv --pairs artifacts/pairs_inventory.csv --events artifacts/reviewed_events.csv --output artifacts/joint
 ```
 
@@ -93,7 +93,7 @@ $riverPython = 'D:\anaconda\envs\river-segment\python.exe'
 
 ```bash
 python -m riverlab train-seg --config configs/segmentation.json --output runs/night_deeplab_s42 --device cuda
-python -m riverlab eval-seg --checkpoint runs/night_deeplab_s42/best.pt --manifest artifacts/night_split/manifest.csv --output runs/night_deeplab_s42_test --device cuda
+python -m riverlab eval-seg --checkpoint runs/night_deeplab_s42/best.pt --manifest datasets/segmentation/night/full_size_split/manifest.csv --output runs/night_deeplab_s42_test --device cuda
 ```
 
 默认夜间整图缩放训练，在原图尺寸恢复概率图后计算 IoU、Dice、边界 F1，255 作为无效标签忽略。边界容差以原图像素计，默认 2 像素；比较不同图像分辨率时需预先确定统一规则。输出分组 bootstrap 置信区间，不把每个裁剪块当成独立重复。
@@ -101,10 +101,10 @@ python -m riverlab eval-seg --checkpoint runs/night_deeplab_s42/best.pt --manife
 白天已有图是 5 列×2 行裁剪，编号为行列 `00…04,10…14`，重建默认 `--layout yx`；不要把它读成列行。输入先按原图分组。白天源 mask 混有 RGB 编码，day_dataset 配置已显式指定解码映射；未知颜色会报错，原图不改写。可在 GPU 主机有足够存储后执行：
 
 ```bash
-python -m riverlab split --manifest artifacts/day_manifest.csv --output artifacts/day_split
-python -m riverlab reconstruct --manifest artifacts/day_split/manifest.csv --output artifacts/day_roi --columns 5 --rows 2
+python -m riverlab split --manifest datasets/segmentation/day/source_manifest.csv --output datasets/segmentation/day/source_split
+python -m riverlab reconstruct --manifest datasets/segmentation/day/source_split/manifest.csv --output datasets/segmentation/day/reconstructed_roi --columns 5 --rows 2
 python -m riverlab train-seg --config configs/segmentation_day.json --output runs/day_deeplab_s42 --device cuda
-python -m riverlab eval-seg --checkpoint runs/day_deeplab_s42/best.pt --manifest artifacts/day_roi/manifest.csv --output runs/day_deeplab_s42_test --device cuda
+python -m riverlab eval-seg --checkpoint runs/day_deeplab_s42/best.pt --manifest datasets/segmentation/day/reconstructed_roi/manifest.csv --output runs/day_deeplab_s42_test --device cuda
 ```
 
 上述白天独立划分用于分割对比；端到端论文实验应换成 `joint-split` 的同一划分。`reconstruct` 必须输入同一来源的完整裁剪网格，不能直接混入夜间整图；混合清单先按来源筛出白天 patch 行。它只能重建既有裁剪覆盖的 ROI，不能恢复原来被丢掉的画面。缺块、重复块或同原图跨集合会报错。

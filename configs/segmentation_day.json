@@ -1,5 +1,5 @@
 {
-  "manifest": "artifacts/day_roi/manifest.csv",
+  "manifest": "datasets/segmentation/day/reconstructed_roi/manifest.csv",
   "model": {"name": "deeplab_mobilenet", "output_stride": 16},
   "input_size": 512,
   "train_crop": true,

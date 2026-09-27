@@ -1,5 +1,5 @@
 {
   "datasets": [
-    {"root": "segment/VOCdevkit/Full_size", "camera": "night", "mode": "night"}
+    {"root": "datasets/segmentation/night/full_size", "camera": "night", "mode": "night"}
   ]
 }

@@ -28,16 +28,17 @@
 
 | 数据 | 本地目录 | 作用 | 当前规模 |
 | --- | --- | --- | ---: |
-| 白天分割裁剪数据 | `segment/VOCdevkit/VOC2007` | 白天河体分割训练及 ROI 重建 | 32,270 块，来自 3,227 张原图 |
-| 夜间分割裁剪数据 | `segment/VOCdevkit/VOC2023` | 历史夜间裁剪分割数据 | 22,700 块 |
-| 夜间整图数据 | `segment/VOCdevkit/Full_size` | 夜间分割主实验 | 722 张整图及 mask |
-| 白天堵江图像对 | 仓库外 `norm-dis-data/data_pairs_normal2dis` | 正常到堵塞的图像对 | 103 个正例目录，另有正常对目录 |
-| 夜间堵江图像对 | 仓库外 `norm-dis-data/Nightdata_pairs_normal2dis` | 夜间正常/堵塞图像对 | 7 个正例、47 个正常对 |
-| 历史分类特征 | `Classifier_ACC0.93/cnn` | 面积、上下边界和标签的历史 CSV | 243 对 |
+| 白天分割裁剪数据 | `datasets/segmentation/day/source_patches` | 白天河体分割训练及 ROI 重建 | 32,270 块，来自 3,227 张原图 |
+| 白天重建 ROI | `datasets/segmentation/day/reconstructed_roi` | 白天分割主实验 | 3,227 张整图及 mask |
+| 夜间分割裁剪数据 | `datasets/segmentation/night/source_patches` | 历史夜间裁剪分割数据 | 22,700 块 |
+| 夜间整图数据 | `datasets/segmentation/night/full_size` | 夜间分割主实验 | 722 张整图及 mask |
+| 白天堵江图像对 | `datasets/classification/day` | 正常到堵塞的图像对 | 103 个正例目录，另有正常对目录 |
+| 夜间堵江图像对 | `datasets/classification/night` | 夜间正常/堵塞图像对 | 7 个正例、47 个正常对 |
+| 历史分类特征 | `datasets/classification/legacy_features` | 面积、上下边界和标签的历史 CSV | 243 对 |
 
 白天 mask 存在不同颜色编码，读取时通过 `configs/day_mask_mapping.json` 显式转换为统一类别。内部 mask 约定为 `0=背景、1=河体、255=忽略区域`。
 
-数据目录被 `.gitignore` 排除。克隆仓库后，需要将数据单独复制到以上相对路径，或修改本地配置指向实际数据位置。
+所有本地数据现集中在 `datasets/`。该目录约 18.9 GB，其中实际数据被 `.gitignore` 排除，目录说明 `datasets/README.md` 由 Git 管理。迁移时直接传输整个 `datasets/` 即可保持所有相对路径。
 
 ## 目录结构
 
@@ -47,8 +48,9 @@ river_warning/
 ├─ configs/                  # 数据、训练、质量控制和实验矩阵配置
 ├─ tests/                    # CPU 自动化测试
 ├─ docs/                     # 实验协议、数据格式、验证与版本说明
-├─ segment/                  # 原分割代码、网络结构及本地 VOC 数据
-├─ Classifier_ACC0.93/       # 原分类代码及历史特征文件
+├─ datasets/                 # 统一保存全部日夜数据、图像对和划分清单
+├─ segment/                  # 原分割代码及网络结构
+├─ Classifier_ACC0.93/       # 原分类代码与历史权重
 ├─ artifacts/                # 清单、划分、特征和实验计划（Git 忽略）
 ├─ runs/                     # 模型、日志、预测和指标（Git 忽略）
 ├─ paper_output/             # 论文表格与图件（Git 忽略）
@@ -112,37 +114,37 @@ python -m unittest discover -s tests -v
 夜间主实验直接读取：
 
 ```text
-segment/VOCdevkit/Full_size/JPEGImages/
-segment/VOCdevkit/Full_size/SegmentationClass/
-artifacts/night_split/manifest.csv
+datasets/segmentation/night/full_size/JPEGImages/
+datasets/segmentation/night/full_size/SegmentationClass/
+datasets/segmentation/night/full_size_split/manifest.csv
 ```
 
 检查命令：
 
 ```bash
 python -m riverlab check-manifest \
-  --manifest artifacts/night_split/manifest.csv \
+  --manifest datasets/segmentation/night/full_size_split/manifest.csv \
   --mask-samples 999999
 ```
 
 ### 白天分割
 
-白天 VOC2007 是 `5×2` 裁剪块，先按 `yx` 编号重建为 `2560×1024` ROI：
+白天源数据是 `5×2` 裁剪块，已按 `yx` 编号重建为 `2560×1024` ROI。需要重新生成时使用：
 
 ```bash
 python -m riverlab reconstruct \
-  --manifest artifacts/day_split/manifest.csv \
-  --output artifacts/day_roi \
+  --manifest datasets/segmentation/day/source_split/manifest.csv \
+  --output datasets/segmentation/day/reconstructed_roi \
   --columns 5 \
   --rows 2 \
   --layout yx
 
 python -m riverlab check-manifest \
-  --manifest artifacts/day_roi/manifest.csv \
+  --manifest datasets/segmentation/day/reconstructed_roi/manifest.csv \
   --mask-samples 999999
 ```
 
-重建目录约占十几 GB，可以在本地 CPU 完成后传到 GPU 服务器，也可以上传约 4.3 GB 的 VOC2007 后在服务器重建。
+重建目录约 13.3 GB，现已包含 3,227 张图像及同名 mask。服务器端直接使用该目录，不需要再次重建。
 
 ## 模型对比与消融实验
 
@@ -174,7 +176,7 @@ python -m riverlab plan \
 ```bash
 python -m riverlab eval-seg \
   --checkpoint runs/seg_main_000/best.pt \
-  --manifest artifacts/night_split/manifest.csv \
+  --manifest datasets/segmentation/night/full_size_split/manifest.csv \
   --split test \
   --output runs/seg_main_000_test \
   --device cuda
@@ -231,33 +233,21 @@ git pull --ff-only
 
 以下内容已被 `.gitignore` 排除，Git 推送不会携带它们：
 
-- `segment/VOCdevkit/`
+- `datasets/segmentation/`
+- `datasets/classification/`
 - `artifacts/`
 - `runs/`
 - `paper_output/`
 - `*.pt`、`*.pth`、`*.joblib`
 - 图像、视频、压缩包和 CSV 数据
 
-这些文件应通过校内存储、`scp`、`sftp` 或 `rsync` 单独传输，并保持仓库内相对路径。例如夜间模型对比至少需要：
+这些文件应通过校内存储、`scp`、`sftp` 或 `rsync` 单独传输。日夜分割、分类图像对、历史特征与划分清单已经统一放在：
 
 ```text
-segment/VOCdevkit/Full_size/
-artifacts/night_split/
+datasets/
 ```
 
-白天模型对比需要以下二选一：
-
-```text
-segment/VOCdevkit/VOC2007/ + artifacts/day_split/
-```
-
-或直接传输已经重建的：
-
-```text
-artifacts/day_roi/
-```
-
-传输完成后先运行 `check-manifest`，再启动训练。不要通过取消 `.gitignore` 的方式把私有数据和十几 GB 的运行结果强行提交到普通 Git 仓库；若将来确需版本化大权重，应单独评估 Git LFS 或对象存储。
+传输整个目录约需 18.9 GB。服务器上把它放到仓库根目录后，现有配置与清单无需改路径。传输完成后先运行 `check-manifest`，再启动训练。不要通过取消 `.gitignore` 的方式把私有数据和十几 GB 的运行结果强行提交到普通 Git 仓库；若将来确需版本化大权重，应单独评估 Git LFS 或对象存储。
 
 ## 文档索引
 
@@ -272,5 +262,5 @@ artifacts/day_roi/
 - 实验代码和 CPU 自动化测试已完成并通过验证。
 - 白天、夜间分割数据清单及分组划分已生成。
 - 夜间模型对比和增广/损失消融配置已生成，等待 GPU 运行。
-- 白天 ROI 重建流程和配置已就绪，生成 `artifacts/day_roi` 后可运行白天模型对比。
+- 白天 ROI 已完成重建并归档到 `datasets/segmentation/day/reconstructed_roi`。
 - 论文性能数字必须来自固定测试集的实际运行结果，历史目录名或旧准确率不作为正式结论。

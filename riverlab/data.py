@@ -239,12 +239,12 @@ def attach_events(rows, events):
 
 def audit_legacy(voc_root):
     report = {}
-    for d in sorted(resolve(voc_root).iterdir()):
-        base = d / "ImageSets" / "Segmentation"
-        if not base.is_dir():
-            continue
+    root = resolve(voc_root)
+    for base in sorted(root.rglob("ImageSets/Segmentation")):
+        d = base.parent.parent
+        dataset_name = d.relative_to(root).as_posix()
         versions = [base] + sorted(base.glob("Fold_*"))
-        report[d.name] = {}
+        report[dataset_name] = {}
         for version in versions:
             sets = {}
             for split in ["train", "val", "test"]:
@@ -259,7 +259,7 @@ def audit_legacy(voc_root):
                     "parent": len({parent_id(x) for x in sets[a]} &
                                   {parent_id(x) for x in sets[b]}),
                 }
-            report[d.name][version.name] = {
+            report[dataset_name][version.name] = {
                 "counts": {k: len(v) for k, v in sets.items()}, "overlaps": comparisons}
     return report
 

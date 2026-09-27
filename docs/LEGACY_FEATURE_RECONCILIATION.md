@@ -4,7 +4,7 @@
 
 ## 证据和修正结论
 
-对 `Classifier_ACC0.93/cnn/area.csv`、`up.csv`、`down.csv` 的243条图像对，以行号保留原始记录，兼容其两种旧时间标识格式（下划线及连字符）后：
+对 `datasets/classification/legacy_features/area.csv`、`up.csv`、`down.csv` 的243条图像对，以行号保留原始记录，兼容其两种旧时间标识格式（下划线及连字符）后：
 
 | 类别 | 对数 | 含义 |
 | --- | ---: | --- |
@@ -15,7 +15,7 @@
 
 此前审计以 `_` 和固定点号格式解析，导致连字符或紧凑日期也被记为错配，从而报出228对。**228不是228条数值特征错误，也不是228条标签错误。**
 
-`up.csv` 与 `down.csv` 的486行图像文件名逐行相同。对 `norm-dis-data` 中同名图像对目录核查：120个目录恰好含对应的两张边界表原图；其余122条在该目录下未找到同名文件夹，另有1条同名文件夹中的图片与边界表不符。这是指定目录内的查找结果，不证明原图在项目其他目录也不存在。
+`up.csv` 与 `down.csv` 的486行图像文件名逐行相同。对 `datasets/classification` 中同名图像对目录核查：120个目录恰好含对应的两张边界表原图；其余122条在该目录下未找到同名文件夹，另有1条同名文件夹中的图片与边界表不符。这是指定目录内的查找结果，不证明原图在项目其他目录也不存在。
 
 需要优先人工查看的6个面积表行号为 **120、121、142、143、154、182**。其中120、121有同名目录和两张匹配图；其余4条没有在上述目录找到同名文件夹。不要仅凭猜测修正旧标识。
 
@@ -38,7 +38,7 @@
 
 ```powershell
 $riverPython = 'D:\anaconda\envs\river-segment\python.exe'
-& $riverPython -m riverlab audit-legacy-features --folder Classifier_ACC0.93/cnn --source-pairs ../../norm-dis-data --output paper_output/data_cleaned/legacy_pair_audit.json --rows-output paper_output/data_cleaned/legacy_pair_reconciliation.csv
+& $riverPython -m riverlab audit-legacy-features --folder datasets/classification/legacy_features --source-pairs datasets/classification --output paper_output/data_cleaned/legacy_pair_audit.json --rows-output paper_output/data_cleaned/legacy_pair_reconciliation.csv
 ```
 
 `source-pairs` 可换为保存旧两帧图像对的实际目录。CSV和JSON只作核查，不会改写原始数据；`import-legacy` 对仍有未复核问题的数据保持拒绝导入。

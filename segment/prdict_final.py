@@ -30,12 +30,12 @@
 #   4. 运行脚本
 #
 #   夜间目录：
-#   predicted_folder_ = r"/hy-tmp/Nightdata_pairs_normal2dis/data_pairs_normal"
-#   output_folder = r'/hy-tmp/Nightdata_pairs_output_normal2dis'
+#   predicted_folder_ = datasets/classification/night/data_pairs_normal
+#   output_folder = runs/legacy_night_prediction
 #
 #   白天目录：
-#    predicted_folder_ = r'/hy-tmp/data_pairs_normal2dis/data_pairs_normal'
-#    output_folder = r'/hy-tmp/data_pairs_output_normal'
+#   predicted_folder_ = datasets/classification/day/data_pairs_normal
+#   output_folder = runs/legacy_day_prediction
 # ============================================================#
 import time
 import os
@@ -351,8 +351,10 @@ if __name__ == "__main__":
     SCENE_MODE = 'night'  # 修改此参数切换模式：'night' 或 'day'
     
     # initial settings
-    predicted_folder_ =r"/hy-tmp/Nightdata_pairs_normal2dis/data_pairs_normal"
-    output_folder = '/hy-tmp/Nightdata_pairs_output_normal2dis'
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    predicted_folder_ = os.path.join(
+        project_root, "datasets", "classification", "night", "data_pairs_normal")
+    output_folder = os.path.join(project_root, "runs", "legacy_night_prediction")
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     deeplab = DeeplabV3()

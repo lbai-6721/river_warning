@@ -1,5 +1,5 @@
 {
-  "manifest": "artifacts/night_split/manifest.csv",
+  "manifest": "datasets/segmentation/night/full_size_split/manifest.csv",
   "model": {"name": "deeplab_mobilenet", "output_stride": 16},
   "input_size": 512,
   "train_crop": false,

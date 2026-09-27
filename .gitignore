@@ -243,6 +243,8 @@ Thumbs.db
 model_data/  # 如果不想提交模型数据
 
 # Reproducible experiment workspace (data remains local)
+datasets/segmentation/
+datasets/classification/
 runs/
 artifacts/
 paper_output/

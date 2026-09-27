@@ -1,6 +1,6 @@
 {
   "datasets": [
-    {"root": "segment/VOCdevkit/VOC2007", "camera": "day", "mode": "day", "mask_mapping": "configs/day_mask_mapping.json"},
-    {"root": "segment/VOCdevkit/Full_size", "camera": "night", "mode": "night"}
+    {"root": "datasets/segmentation/day/source_patches", "camera": "day", "mode": "day", "mask_mapping": "configs/day_mask_mapping.json"},
+    {"root": "datasets/segmentation/night/full_size", "camera": "night", "mode": "night"}
   ]
 }
