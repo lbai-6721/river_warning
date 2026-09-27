@@ -87,6 +87,9 @@ def segmentation_loss(logits, target, config):
 def train(config, output, device="cuda"):
     if int(config.get("epochs", 100)) < 1:
         raise ValueError("epochs must be positive")
+    patience = int(config.get("patience", 20))
+    if patience < 0:
+        raise ValueError("patience must be nonnegative; use 0 to disable early stopping")
     rows = read_csv(config["manifest"])
     validate_splits(rows)
     tr = [r for r in rows if r["split"] == "train"]
@@ -147,7 +150,7 @@ def train(config, output, device="cuda"):
             stale += 1
         write_csv(run / "history.csv", history)
         print("epoch={} train_loss={:.5f} val_loss={:.5f}".format(epoch+1, total_loss/count, val_loss), flush=True)
-        if stale >= config.get("patience", 20):
+        if patience and stale >= patience:
             break
     completed(run)
     return run

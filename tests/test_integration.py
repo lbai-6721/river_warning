@@ -48,11 +48,12 @@ class IntegrationTests(unittest.TestCase):
         manifest = self.root / "seg.csv"
         write_csv(manifest, rows)
         config = dict(manifest=str(manifest), model={"name": "unet", "width": 2},
-                      input_size=32, epochs=1, batch_size=2, workers=0, threads=2, seed=42,
+                      input_size=32, epochs=2, patience=0, batch_size=2, workers=0, threads=2, seed=42,
                       loss={"dice_weight": .5, "boundary_weight": .1, "focal_gamma": 2}, bootstrap=10)
         train_dir = seg.train(config, self.root / "train", "cpu")
         cp = load_weights(train_dir / "best.pt")
         self.assertEqual(cp["provenance"]["train_ids"], ["0", "1", "2", "3"])
+        self.assertEqual(len(read_csv(train_dir / "history.csv")), 2)
         # Evaluation must not train, and test images are returned at original size.
         with patch.object(torch.Tensor, "backward", side_effect=AssertionError("test trained")):
             metrics = seg.evaluate(train_dir / "best.pt", manifest, self.root / "eval", "cpu")
