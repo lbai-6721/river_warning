@@ -47,6 +47,8 @@ def parser():
     q = sub.add_parser("audit-legacy-features")
     q.add_argument("--folder", default="Classifier_ACC0.93/cnn")
     q.add_argument("--output", required=True)
+    q.add_argument("--source-pairs")
+    q.add_argument("--rows-output")
     q = sub.add_parser("joint-split")
     q.add_argument("--frames", required=True)
     q.add_argument("--pairs", required=True)
@@ -248,9 +250,11 @@ def main(argv=None):
         result = {"samples": len(rows)}
     elif a.command == "audit-legacy-features":
         from .features import audit_legacy_features
-        result = audit_legacy_features(a.folder)
+        result = audit_legacy_features(a.folder, a.source_pairs)
         write_json(a.output, result)
-        result = {k: v for k, v in result.items() if k != "issues"}
+        if a.rows_output:
+            write_csv(a.rows_output, result["rows"])
+        result = {k: v for k, v in result.items() if k not in {"issues", "rows"}}
     elif a.command == "reconstruct":
         from .reconstruct import reconstruct
         result = reconstruct(read_csv(a.manifest), a.output, a.columns, a.rows, a.layout)

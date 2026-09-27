@@ -31,8 +31,9 @@ $riverPython = 'D:\anaconda\envs\river-segment\python.exe'
 - [实验实现、GPU 运行顺序与命令](docs/EXPERIMENTS.md)
 - [数据清单、事件标注与结果格式](docs/DATA_SCHEMA.md)
 - [本次 CPU 验证与数据检查](docs/CPU_VERIFICATION.md)
+- [旧分类特征核对与修复](docs/LEGACY_FEATURE_RECONCILIATION.md)
 - [Git 版本与迁移说明](docs/REPOSITORY.md)
 
-**当前数据待办：** 旧三张分类 CSV 的243个图像对中228个标识核对不通过，不能直接拼接后训练。使用 `audit-legacy-features` 查看错配行，核对标签来源后从原图重算特征。原始数据保持原样。
+**当前数据待办：** 旧三张分类 CSV 共243对。兼容两种旧标识格式后，134对起止小时一致，103对仅起始小时不一致，另6对需单独复核；其中103对的同名原始文件夹均包含边界表对应的两张图。旧审计所报的228对包含格式误判，不能解释为228对数值错误。用 `audit-legacy-features` 生成逐行证据，核对特征来源和标签后重建可发表数据集。原始 CSV 保持原样。
 
 正式模型训练与论文性能结果尚未完成；当前交付为通过 CPU 验证的实验工程。

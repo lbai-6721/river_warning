@@ -8,7 +8,8 @@ from PIL import Image
 
 from riverlab.augment import apply
 from riverlab.cli import main
-from riverlab.features import audit_legacy_features, load_legacy, extract_pair_features
+from riverlab.features import (audit_legacy_features, load_legacy,
+                               extract_pair_features, parse_legacy_pair_id)
 from riverlab.io import write_csv, write_json, read_json, new_run, completed
 from riverlab.replay import run as replay_run
 from riverlab.reporting import classifier_figures, aggregate
@@ -37,6 +38,13 @@ class ArtifactTests(unittest.TestCase):
                                     ["2022.6.1.10_2022.6.1.11"]+["0.2"]*10+["1"]])
         self.assertTrue(audit_legacy_features(self.root)["valid"])
         self.assertEqual(len(load_legacy(self.root)), 1)
+        pair_folder = self.root/"pairs"/"2022.6.1.10_2022.6.1.11"
+        pair_folder.mkdir(parents=True)
+        (pair_folder/a).touch()
+        (pair_folder/b).touch()
+        evidence = audit_legacy_features(self.root, self.root/"pairs")
+        self.assertEqual(evidence["rows"][0]["source_folder_status"], "unique_exact_two_frames")
+        self.assertEqual(evidence["rows"][0]["source_folder"], pair_folder.name)
         area.write_text(area.read_text().replace("2022.6.1.10_", "2022.6.1.11_"), encoding="utf-8")
         original = area.read_bytes()
         with self.assertRaisesRegex(ValueError, "inconsistent"):
@@ -44,6 +52,13 @@ class ArtifactTests(unittest.TestCase):
         self.assertEqual(area.read_bytes(), original)
         self.assertEqual(read_json(self.root/"out.audit.json")["issue_pairs"], 1)
         self.assertFalse((self.root/"out.csv").exists())
+
+    def test_legacy_hour_formats_and_repeated_current_hour(self):
+        self.assertEqual(parse_legacy_pair_id("2022.1.1.10-2022.1.1-11")[1].hour, 11)
+        self.assertEqual(parse_legacy_pair_id("2022080107-2022080108")[0].hour, 7)
+        self.assertEqual(parse_legacy_pair_id("2021.6.14.15_2021.6.14.15")[0].hour, 15)
+        with self.assertRaises(ValueError):
+            parse_legacy_pair_id("2022.5.1.12")
 
     def test_weather_and_device_augmentation_preserve_labels(self):
         image = np.full((32, 48, 3), 80, dtype=np.uint8)

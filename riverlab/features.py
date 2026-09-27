@@ -1,7 +1,9 @@
 """Normalized geometry, causal temporal features, and legacy CSV migration."""
 import csv
+import os
+import re
 from datetime import datetime
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 import cv2
 import numpy as np
@@ -9,7 +11,7 @@ from PIL import Image
 from scipy.ndimage import gaussian_filter1d
 
 from .data import group_rows, timestamp
-from .io import read_csv, resolve
+from .io import digest, read_csv, resolve
 from .masks import read_mask
 
 
@@ -152,23 +154,73 @@ def legacy_tables(folder):
     return rows("up.csv"), rows("down.csv"), rows("area.csv")
 
 
-def audit_legacy_features(folder):
-    """Report all mismatched rows without guessing which source is correct."""
+def parse_legacy_pair_id(value):
+    """Read both historical hour-label formats; never infer missing timestamps."""
+    parts = value.split("_") if "_" in value else value.split("-", 1)
+    if len(parts) != 2:
+        raise ValueError("missing_pair_separator")
+    result = []
+    for part in parts:
+        # One historical row used a dash before the second hour.
+        part = re.sub(r"^(\d{4}\.\d{1,2}\.\d{1,2})-(\d{1,2})$", r"\1.\2", part)
+        if re.fullmatch(r"\d{10}", part):
+            fmt = "%Y%m%d%H"
+        elif re.fullmatch(r"\d{4}\.\d{1,2}\.\d{1,2}\.\d{1,2}", part):
+            fmt = "%Y.%m.%d.%H"
+        else:
+            raise ValueError("invalid_hour_format")
+        result.append(datetime.strptime(part, fmt))
+    return tuple(result)
+
+
+def source_pair_folders(root, pair_ids):
+    if root is None:
+        return {}
+    root = resolve(root).resolve()
+    if not root.is_dir():
+        raise ValueError("Source pair directory does not exist: {}".format(root))
+    found = defaultdict(list)
+    for directory, _subdirs, files in os.walk(root):
+        path = resolve(directory)
+        if path.name in pair_ids:
+            images = {name for name in files if name.lower().endswith((".jpg", ".jpeg", ".png"))}
+            found[path.name].append((path.relative_to(root).as_posix(), images))
+    return found
+
+
+def audit_legacy_features(folder, source_pairs=None):
+    """Audit row alignment, timestamp labels and optional source-image evidence."""
     up, down, area = legacy_tables(folder)
     issues = []
     counts = {"up_rows": len(up)-1, "down_rows": len(down)-1, "area_rows": len(area)-1}
+    source_sha256 = {name: digest(resolve(folder) / name)
+                     for name in ("up.csv", "down.csv", "area.csv")}
     if len(up) != len(down) or len(up)-1 != 2*(len(area)-1):
-        return {"counts": counts, "valid": False, "issues": [{"error": "row_count_mismatch"}]}
+        return {"counts": counts, "valid": False, "issue_pairs": None,
+                "source_sha256": source_sha256,
+                "issues": [{"error": "row_count_mismatch"}], "rows": []}
+    folders = source_pair_folders(source_pairs, {r[0] for r in area[1:]})
+    reviewed = []
     for i, ar in enumerate(area[1:]):
         ai, bi = 1+2*i, 2+2*i
-        issue = {"area_csv_row": i+2, "boundary_csv_rows": [ai+1, bi+1],
-                 "area_pair": ar[0], "boundary_frames": [up[ai][0], up[bi][0]]}
+        row = {"area_csv_row": i+2, "boundary_csv_rows": [ai+1, bi+1],
+               "area_pair": ar[0], "boundary_frame_a": up[ai][0],
+               "boundary_frame_b": up[bi][0], "label": ar[11] if len(ar) > 11 else "",
+               "pair_id_format": "underscore" if "_" in ar[0] else
+                                 "hyphen" if "-" in ar[0] else "single"}
         problems = []
         try:
             times = [datetime.fromisoformat(timestamp(up[k][0])) for k in [ai, bi]]
-            expected = [datetime.strptime(p, "%Y.%m.%d.%H") for p in ar[0].split("_")]
-            if expected != [t.replace(minute=0, second=0) for t in times]:
-                problems.append("area_boundary_timestamp_mismatch")
+            row["frame_a_time"], row["frame_b_time"] = [t.isoformat() for t in times]
+            try:
+                expected = parse_legacy_pair_id(ar[0])
+                actual = [t.replace(minute=0, second=0) for t in times]
+                if expected[0] != actual[0]:
+                    problems.append("reference_hour_differs")
+                if expected[1] != actual[1]:
+                    problems.append("current_hour_differs")
+            except ValueError:
+                problems.append("unparseable_area_pair_id")
             if times[1] <= times[0]:
                 problems.append("non_increasing_timestamps")
             if any(up[k][0] != down[k][0] for k in [ai, bi]):
@@ -183,10 +235,28 @@ def audit_legacy_features(folder):
                     break
         except (ValueError, IndexError) as exc:
             problems.append(str(exc))
+        candidates = folders.get(ar[0], [])
+        exact = [p for p, files in candidates
+                 if {up[ai][0], up[bi][0]} <= files and len(files) == 2]
+        if source_pairs is not None:
+            row["source_folder_status"] = (
+                "unique_exact_two_frames" if len(exact) == 1 else
+                "multiple_exact_folders" if len(exact) > 1 else
+                "folder_without_pair_frames" if candidates else "no_named_folder")
+            row["source_folder"] = exact[0] if len(exact) == 1 else ""
+        row["problems"] = "|".join(problems)
+        row["status"] = "hour_match" if not problems else (
+            "reference_hour_only" if problems == ["reference_hour_differs"] else
+            "other_review_needed")
+        reviewed.append(row)
         if problems:
-            issue["problems"] = problems
-            issues.append(issue)
-    return {"counts": counts, "valid": not issues, "issue_pairs": len(issues), "issues": issues}
+            issues.append(row)
+    return {"counts": counts, "valid": not issues, "issue_pairs": len(issues),
+            "source_sha256": source_sha256,
+            "status_counts": dict(Counter(r["status"] for r in reviewed)),
+            "source_folder_counts": dict(Counter(r.get("source_folder_status", "not_checked")
+                                                for r in reviewed)),
+            "issues": issues, "rows": reviewed}
 
 
 def load_legacy(folder, camera="day"):
@@ -201,11 +271,8 @@ def load_legacy(folder, camera="day"):
             raise ValueError("up/down frame ID mismatch at pair {}".format(i))
         ta, tb = timestamp(up[a_idx][0]), timestamp(up[b_idx][0])
         # Legacy pair identifiers have hour precision; verify against actual frames.
-        pair = ar[0].split("_")
-        if len(pair) != 2:
-            raise ValueError("Expected start_end area pair ID")
-        expected = [datetime.strptime(p, "%Y.%m.%d.%H") for p in pair]
-        actual = [datetime.fromisoformat(t).replace(minute=0, second=0) for t in (ta, tb)]
+        expected = parse_legacy_pair_id(ar[0])
+        actual = tuple(datetime.fromisoformat(t).replace(minute=0, second=0) for t in (ta, tb))
         if expected != actual:
             raise ValueError("Area/boundary time-pair mismatch at {}".format(ar[0]))
         if tb <= ta:
