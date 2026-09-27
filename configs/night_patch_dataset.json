@@ -1,0 +1,10 @@
+{
+  "datasets": [
+    {
+      "root": "datasets/segmentation/night/source_patches",
+      "camera": "night",
+      "mode": "night",
+      "mask_mapping": "configs/night_patch_mask_mapping.json"
+    }
+  ]
+}

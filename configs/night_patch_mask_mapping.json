@@ -1,0 +1,5 @@
+{
+  "description": "Night patch masks: black is background and VOC class-1 red is river.",
+  "indexed": {"0": 0, "1": 1, "255": 255},
+  "rgb": {"0,0,0": 0, "128,0,0": 1}
+}
