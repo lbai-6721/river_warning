@@ -1,0 +1,27 @@
+{
+  "confusion_matrix": [
+    [
+      1950524657,
+      1687525
+    ],
+    [
+      37936782,
+      86031516
+    ]
+  ],
+  "river_iou": 0.684660001789173,
+  "mean_iou": 0.8323748900670133,
+  "dice": 0.8128168307694585,
+  "pixel_accuracy": 0.9809148061155069,
+  "boundary_f1": 0.27203326900711,
+  "n_images": 792,
+  "seconds_median": 0.1867065066471696,
+  "seconds_p95": 0.20308217606507242,
+  "limited_smoke_only": false,
+  "boundary_tolerance_pixels": 2,
+  "river_iou_ci95": [
+    0.6689402037733206,
+    0.7003818880165692
+  ],
+  "independent_groups": 65
+}

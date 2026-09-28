@@ -1,0 +1,11 @@
+{
+  "model": "unet",
+  "weight_file": "best_epoch_016.pt",
+  "source_run": "runs/day_full_scratch_early_stop_001",
+  "best_epoch": 16,
+  "best_validation_loss": 0.05076035370936986,
+  "completed_epochs": 36,
+  "training_git_commit": "e12fa6ea8ee4a1918024bcbd79e3d0dd8de4a4f9",
+  "manifest_sha256": "a8e894a6ba80e096bd6847c6a9ee22166ea67f1461d39b8507e2498b29eac24d",
+  "weight_sha256": "4a9ff00289a7f20b5b6a8a21eda350d5722da820cb0d50789950335e5babc851"
+}

@@ -1,0 +1,11 @@
+{
+  "model": "deeplab_mobilenet",
+  "weight_file": "best_epoch_010.pt",
+  "source_run": "runs/day_full_scratch_early_stop_000",
+  "best_epoch": 10,
+  "best_validation_loss": 0.059806372040224876,
+  "completed_epochs": 30,
+  "training_git_commit": "e12fa6ea8ee4a1918024bcbd79e3d0dd8de4a4f9",
+  "manifest_sha256": "a8e894a6ba80e096bd6847c6a9ee22166ea67f1461d39b8507e2498b29eac24d",
+  "weight_sha256": "993864c023e2b6f308f42f25d89c0a40f07f79a39c05315ecfcbac484b6d8061"
+}
