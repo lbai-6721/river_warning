@@ -1,0 +1,19 @@
+{
+  "experiments": [
+    {
+      "name": "day_patch_scratch_no_early_stop",
+      "command": "train-seg",
+      "base_config": "configs/segmentation_day_patch.json",
+      "grid": {
+        "model.name": [
+          "deeplab_mobilenet",
+          "unet",
+          "lraspp_mobilenet"
+        ],
+        "seed": [
+          42
+        ]
+      }
+    }
+  ]
+}
