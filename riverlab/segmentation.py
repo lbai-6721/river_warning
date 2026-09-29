@@ -32,26 +32,29 @@ class SegDataset(Dataset):
 
     def __getitem__(self, index):
         row = self.rows[index]
-        with Image.open(resolve(row["image_path"])) as im:
-            image = np.array(im.convert("RGB"))
         mask = read_mask(row)
-        if image.shape[:2] != mask.shape:
-            raise ValueError("Image/mask size mismatch: {}".format(row["sample_id"]))
-        if mask.ndim != 2 or not set(np.unique(mask)) <= {0, 1, 255}:
-            raise ValueError("Invalid binary mask: {}".format(row["mask_path"]))
         rng = np.random.default_rng(self.seed + self.epoch * 1000003 + index)
         size = int(self.config.get("input_size", 512))
-        if self.training and self.config.get("train_crop", False):
-            h, w = mask.shape
-            if min(h, w) < size:
-                image = np.pad(image, ((0, max(0, size-h)), (0, max(0, size-w)), (0, 0)))
-                mask = np.pad(mask, ((0, max(0, size-h)), (0, max(0, size-w))), constant_values=255)
-            h, w = mask.shape
-            top, left = rng.integers(0, h-size+1), rng.integers(0, w-size+1)
-            image, mask = image[top:top+size, left:left+size], mask[top:top+size, left:left+size]
-        else:
-            image = np.array(Image.fromarray(image).resize((size, size), Image.BILINEAR))
-            mask = np.array(Image.fromarray(mask).resize((size, size), Image.NEAREST))
+        with Image.open(resolve(row["image_path"])) as im:
+            if (im.height, im.width) != mask.shape:
+                raise ValueError("Image/mask size mismatch: {}".format(row["sample_id"]))
+            if self.training and self.config.get("train_crop", False):
+                h, w = mask.shape
+                if min(h, w) < size:
+                    image = np.array(im.convert("RGB"))
+                    image = np.pad(image, ((0, max(0, size-h)), (0, max(0, size-w)), (0, 0)))
+                    mask = np.pad(mask, ((0, max(0, size-h)), (0, max(0, size-w))),
+                                  constant_values=255)
+                    h, w = mask.shape
+                    top, left = rng.integers(0, h-size+1), rng.integers(0, w-size+1)
+                    image, mask = image[top:top+size, left:left+size], mask[top:top+size, left:left+size]
+                else:
+                    top, left = rng.integers(0, h-size+1), rng.integers(0, w-size+1)
+                    image = np.array(im.crop((left, top, left+size, top+size)).convert("RGB"))
+                    mask = mask[top:top+size, left:left+size]
+            else:
+                image = np.array(im.convert("RGB").resize((size, size), Image.BILINEAR))
+                mask = np.array(Image.fromarray(mask).resize((size, size), Image.NEAREST))
         if self.training:
             image, mask = augment.apply(image, mask, rng, self.config.get("augmentation", {}))
         return tensor_image(image), torch.from_numpy(mask.astype(np.int64))
