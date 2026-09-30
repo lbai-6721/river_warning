@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>川流 · 河道监测</title><link rel="stylesheet" href="/style.css"><script defer src="/app.js"></script></head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="/" aria-label="川流首页"><span class="brand-mark">≋</span><span>川流<small>RIVER OBSERVATORY</small></span></a>
+  <p class="nav-label">工作空间</p>
+  <nav aria-label="主要导航">
+    <button class="nav active" data-page="overview"><span>▦</span>监控总览<i>01</i></button>
+    <button class="nav" data-page="analysis"><span>◫</span>对比分析<i>02</i></button>
+    <button class="nav" data-page="history"><span>◷</span>检测与告警记录<i>03</i></button>
+    <button class="nav" data-page="settings"><span>⚙</span>系统设置<i>04</i></button>
+  </nav>
+  <div class="side-note"><span class="status-dot"></span> 本地工作站<p>图像与推理结果保存在本机</p><div class="device" id="device">正在连接…</div></div>
+  <div class="sidebar-bottom">河流堵塞监测系统<span>LOCAL EDITION / 01</span></div>
+</aside>
+<main>
+  <header><div class="breadcrumb">河道监测 <span>/</span> <b id="breadcrumb">监控总览</b></div><div class="header-right"><span id="connection" class="connection">连接中</span><time id="clock"></time></div></header>
+  <div class="workspace">
+    <div class="page-title"><div><p class="eyebrow">RIVER INTELLIGENCE</p><h1 id="page-title">让河道变化，清晰可见。</h1><p id="page-subtitle">从河体分割到变化分析，追踪每一次观测。</p></div><span class="local-tag">本地数据 · 真实模型推理</span></div>
+    <div id="toast" role="status" aria-live="polite" hidden></div>
+    <section id="page-overview" class="page">
+      <div class="stats">
+        <article><span>可用图像对</span><strong id="stat-pairs">—</strong><small>白天 / 夜间监测数据</small><b class="stat-icon">◫</b></article>
+        <article><span>已有检测记录</span><strong id="stat-runs">0</strong><small>本机持久保存</small><b class="stat-icon">↗</b></article>
+        <article><span>疑似堵塞记录</span><strong id="stat-alerts">0</strong><small>模型判为异常的样本</small><b class="stat-icon amber">△</b></article>
+        <article><span>当前任务</span><strong class="status-value" id="stat-job">待命</strong><small id="job-progress">选择数据，开始一次检测</small><b class="stat-icon">⌁</b></article>
+      </div>
+      <div class="monitor-grid">
+        <section class="panel viewer-panel">
+          <div class="panel-heading"><h2><span class="status-dot"></span>河道观测</h2><div class="segmented" id="view-tabs"><button data-view="raw" class="selected">原始图像</button><button data-view="overlay">河体分割</button><button data-view="change">变化区域</button></div></div>
+          <div class="viewer" id="viewer"><img id="main-image" alt="当前河道观测图像" hidden><div class="viewer-placeholder" id="viewer-placeholder"><span>≋</span><h3>连接一段河流的观测</h3><p>选择图像对，或导入本地图片开始分析</p></div><div class="viewer-label" id="viewer-label">等待观测数据</div><div class="viewer-corner">RIVER / OBSERVATION</div></div>
+          <div class="viewer-footer"><span id="image-caption">选择已有数据后可预览原图</span><span id="image-mode">—</span></div>
+          <div class="legend"><span><i class="teal"></i>河体区域</span><span><i class="blue"></i>新增区域</span><span><i class="orange"></i>减少区域</span><small>变化颜色用于说明几何差异</small></div>
+        </section>
+        <section class="panel input-panel"><div class="panel-heading"><h2>数据与检测</h2><span class="tiny">INPUT</span></div>
+          <div class="panel-body"><div class="segmented source-tabs"><button id="source-dataset" class="selected">已有数据集</button><button id="source-upload">上传图像</button></div>
+            <label for="mode">观测场景</label><select id="mode"><option value="day">白天 · 彩色图像</option><option value="night">夜间 · 低光照图像</option></select>
+            <div id="dataset-fields"><label for="pair-select">图像对 <span id="pair-count"></span></label><select id="pair-select"></select><div class="pair-meta" id="pair-meta">正在读取数据索引…</div><label class="check"><input id="legacy-only" type="checkbox">仅显示有配套历史分类特征的样本</label><label for="replay-count">样本回放数量</label><select id="replay-count"><option value="5">从当前样本起 · 5 对</option><option value="10">从当前样本起 · 10 对</option><option value="20">从当前样本起 · 20 对</option></select></div>
+            <div id="upload-fields" hidden><label class="dropzone" for="file-input"><span>＋</span><b>选择参考图与当前图</b><small>也支持 3–20 张同一摄像头的连续图片</small><input id="file-input" type="file" accept="image/jpeg,image/png,image/bmp" multiple></label><div id="upload-list"></div><p class="help">按拍摄时间排序，首张作为固定参考。请填写真实拍摄时间，文件名含时间戳时会自动识别。</p></div>
+            <div class="actions"><button id="run-button" class="primary">开始检测 <span>→</span></button><button id="replay-button" class="secondary">样本回放</button><button id="stop-button" class="danger" hidden>停止任务</button></div>
+            <p class="help" id="input-help">样本回放逐对独立检测，不代表连续视频流。</p>
+          </div>
+        </section>
+      </div>
+      <div class="bottom-grid"><section class="panel"><div class="panel-heading"><h2>判定与观测依据</h2><span class="tiny">ASSESSMENT</span></div><div class="assessment"><div><span id="assessment-badge" class="badge neutral">等待检测</span><h3 id="assessment-title">尚未生成判定</h3><p id="assessment-description">运行一次检测后，查看模型判定及其数据来源。</p></div><div class="score-box"><strong id="score">—</strong><span>分类分数</span><small id="threshold">阈值 —</small></div></div><div class="metric-row"><div>河体占比<strong id="area-current">—</strong></div><div>占比变化<strong id="area-change">—</strong></div><div>分析耗时<strong id="duration">—</strong></div></div></section>
+      <section class="panel"><div class="panel-heading"><h2>最近检测</h2><button class="text-button" id="all-records">全部记录 ↗</button></div><div id="recent-list" class="recent-list"><div class="empty">还没有检测记录</div></div></section></div>
+      <div id="task-errors" class="notice" hidden></div>
+    </section>
+    <section id="page-analysis" class="page" hidden><div class="notice">前后画面应来自同一摄像头、相同视角。当前展示最近选中的检测记录。</div><div class="compare-grid"><section class="panel"><div class="panel-heading"><h2>参考时刻 · 河体边界</h2><span id="reference-time" class="tiny">—</span></div><div class="compare-image"><img id="reference-image" alt="参考图分割叠加" hidden><span class="compare-empty">检测后显示</span></div></section><section class="panel"><div class="panel-heading"><h2>当前时刻 · 河体边界</h2><span id="current-time" class="tiny">—</span></div><div class="compare-image"><img id="current-image" alt="当前图分割叠加" hidden><span class="compare-empty">检测后显示</span></div></section></div><section class="panel chart-panel"><div class="panel-heading"><h2>20 个区域的河体占比变化</h2><span class="tiny">单位：百分点 · 当前减参考</span></div><div id="geometry-chart" class="bar-chart"><div class="empty">检测后生成变化分布</div></div><p class="help chart-help">沿图像水平方向等宽划分；几何变化不等于灾害等级。</p></section><section class="panel provenance"><h2>判定来源</h2><p id="provenance-text">尚未选择记录。</p><div id="downloads"></div></section></section>
+    <section id="page-history" class="page" hidden><section class="panel"><div class="panel-heading"><h2>检测与告警记录</h2><div class="history-tools"><select id="history-filter" aria-label="记录筛选"><option value="all">全部结果</option><option value="positive">疑似堵塞</option><option value="unknown">无法判定</option></select><a class="secondary link-button" href="/api/export" download="river-monitor.csv">导出 CSV ↗</a></div></div><div class="table-scroll"><table><thead><tr><th>观测时间</th><th>场景</th><th>判定</th><th>分数</th><th>结果来源</th><th>告警状态</th><th>详情</th></tr></thead><tbody id="history-body"></tbody></table></div><div id="history-empty" class="empty">暂无记录。先运行一次检测。</div></section></section>
+    <section id="page-settings" class="page" hidden><div class="settings-grid"><section class="panel"><div class="panel-heading"><h2>告警参数</h2><span class="tiny">ALERT POLICY</span></div><form id="settings-form" class="panel-body"><label for="setting-threshold">触发阈值（历史分类分数）</label><input id="setting-threshold" type="number" min="0.01" max="1" step="0.01" required><label for="setting-clear">解除阈值</label><input id="setting-clear" type="number" min="0" max="0.99" step="0.01" required><div class="form-row"><div><label for="setting-confirm">连续触发次数</label><input id="setting-confirm" type="number" min="1" max="100" required></div><div><label for="setting-recover">连续恢复次数</label><input id="setting-recover" type="number" min="1" max="100" required></div></div><label for="setting-gap">最大观测间隔（秒）</label><input id="setting-gap" type="number" min="1" max="86400" required><p class="help">连续确认适用于同一摄像头的图片序列。未知观测不解除已有告警。新版配套分类器使用训练时冻结的触发阈值。</p><button class="primary" type="submit">保存设置</button></form></section><section class="panel"><div class="panel-heading"><h2>模型与运行环境</h2><span class="tiny">MODEL STATUS</span></div><div class="panel-body" id="model-list"></div><div class="notice model-note">历史分类结果使用原始 CSV 特征计算，未代表当前分割模型的完整预测效果。新图像在未配置配套分类器时仅提供分割与变化分析。</div></section></div></section>
+    <footer><span>川流 · 让每次观测都有依据</span><span>LOCAL INFERENCE · DATA STAYS HERE</span></footer>
+  </div>
+</main>
+</body></html>

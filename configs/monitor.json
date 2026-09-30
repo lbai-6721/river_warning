@@ -1,0 +1,28 @@
+{
+  "host": "127.0.0.1",
+  "port": 8877,
+  "device": "cpu",
+  "threads": 2,
+  "output": "runs/monitor",
+  "dataset": "datasets/classification",
+  "legacy_features": "datasets/classification/legacy_features",
+  "legacy_checkpoint": "Classifier_ACC0.93/cnn/checkpoint.pth",
+  "profiles": {
+    "day": {
+      "name": "白天 · DeepLabV3+",
+      "checkpoint": "../../远程权重/AutoDL_已完成训练_20260930/白天重建整图_100轮/DeepLabV3Plus_MobileNetV2/best_epoch_080.pt",
+      "roi": [0, 208, 2560, 1232],
+      "source_size": [2560, 1440],
+      "classifier": null
+    },
+    "night": {
+      "name": "夜间 · DeepLabV3+",
+      "checkpoint": "../../远程权重/AutoDL_已完成训练_20260930/夜间重建整图_100轮/DeepLabV3Plus_MobileNetV2/best_epoch_042.pt",
+      "roi": null,
+      "source_size": null,
+      "classifier": null
+    }
+  },
+  "quality": {"blur_min": 5, "dark_max": 0.95, "bright_max": 0.95},
+  "alert": {"threshold": 0.5, "clear_threshold": 0.35, "consecutive": 2, "clear_consecutive": 3, "max_gap_seconds": 7200}
+}
